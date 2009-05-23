@@ -1,0 +1,49 @@
+h1. The Blank Project
+
+This project is a simple blank-client example, that can be used to populate a blank project server.  This project uses a simple ruby script and config file to update a blank project server with content.  You can use this structure and create your content files in haml and markdown and name them by .haml and .markdown.  Then you can run the deploy_content.rb script and you will update your website.  This is a super simple example, I use Textmate or E-TextEditor on Windows and load the Haml, and Markdown Bundles and this creates a very simple to use content management system.
+
+But you can use any editor to maintain and create your files, then use the deploy script to update the web site.
+
+h2. Getting Started
+
+* Prerequisites
+
+ First you need Ruby, RubyGems installed on your system.
+ 
+ Next you need to install the following gems:
+ 
+@sudo gem install rest-client rake crack aws-s3@
+ 
+ This will give you all the tools you need to deploy your content to the blank server.  
+ 
+* Next pull down the blank-client
+ 
+@git clone git://github.com/twilson63/blank-client.git [you project name]@
+
+Then add your blank server url, api key and bucket (S3) settings:
+
+@
+  url: [Your Url]
+  api_key: [Api Key you set for your blank server ]
+  bucket: [S3 bucket you will be storing your assets]
+@
+ 
+Start creating your pages, the default page called index, this is the page that will load when you call [Your Url Root] e.g. http://localhost:3000
+
+Now when you create a file in the root of the folder it will be accessible from the root of the web site.  So if you create a haml file called "about.haml", and deploy it to the blank server then it will be accessible by http://localhost:3000/about, now if you create a folder from the root every haml or markdown file created in that folder will be accessible by folder name/file name.  So you are able to manage your web site by using a folder structure, just as you did before.  
+
+h3. Do not create a folder named pages, it will not work.
+
+Using haml you can use what is called partials or includes.  This allows you to include a file within another file, in this project you can look at the shared folder and see the partial files that I created.
+
+* _javascripts.haml
+* _stylesheets.haml
+* _header.haml
+* _footer.haml
+* _menu.haml
+
+You can see in the layout.haml how I include the partial files:
+
+@
+  = haml Page.get_page('shared/_menu'), :layout => false
+@

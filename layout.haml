@@ -1,0 +1,16 @@
+%html
+  %head
+    %title= "Blank Client - " + @title || "The Blank Project 0.1"
+    = haml Page.find_by_name('shared/_stylesheets').body, :layout => false
+    = haml Page.find_by_name('shared/_javascripts').body, :layout => false    
+  %body
+    #container.clearfix.ui-corner-all
+      = haml Page.find_by_name('shared/_header').body, :layout => false
+      %hr.big_hr
+      #content.span-24
+        = haml Page.find_by_name('shared/_menu').body, :layout => false
+
+        %hr.small_hr    
+        = yield
+      
+      = haml Page.find_by_name('shared/_footer').body, :layout => false

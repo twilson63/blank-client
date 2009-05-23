@@ -1,0 +1,4 @@
+production:
+  url: http://localhost:3000
+  key: [Your Key]
+  bucket: [Your S3 Bucket]

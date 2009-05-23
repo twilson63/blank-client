@@ -1,0 +1,82 @@
+require 'rubygems'
+require 'rest_client'
+require 'crack/json'
+require 'aws/s3'
+
+task :environment do
+  config = YAML.load(File.read('config.yml'))  
+  @key = config['production']['key']
+  @bucket = config['production']['bucket']
+  @url = config['production']['url']
+
+  @client = RestClient::Resource.new @url
+
+  @files = Dir.glob('**/*.haml') + Dir.glob('**/*.markdown') 
+  @stylesheets = Dir.glob('stylesheets/*.css')
+  @javascripts = Dir.glob('javascripts/*.js')
+
+end
+
+namespace :deploy do
+
+  task(:pages => :environment) do
+    @files.each do |f|
+      deploy_file(f.split('.')[0], f.split('.')[1], open(f).read)
+      puts "Successfully updated #{f} on #{@url}"
+    end    
+  end
+  
+  task(:images => :environment) do
+    # upload images to s3
+    @images.each do |i|
+      store_asset i
+    end  
+  end
+
+  task(:stylesheets => :environment) do
+    @stylesheets.each do |css|
+      store_asset css
+    end  
+  end
+
+  task(:javascripts => :environment) do
+    # upload javascripts s3
+    @javascripts.each do |js|
+      store_asset js
+    end  
+  end
+  
+  
+  
+  
+end
+
+def deploy_file(name, type, body)
+  # Find Page?
+  page = Crack::JSON.parse(@client["/pages/#{name}?api_key=#{@key}"].get)
+  if page
+    ## Update
+    page = @client["/pages/#{page["id"]}"].put :page => {
+      :page_type => type,
+      :name => name,
+      :body => body
+    }, :api_key => @key
+  else
+    puts "Posting #{name}.#{type}"
+    ## Create
+    page = @client['/pages'].post :page => {
+      :page_type => type,
+      :name => name,
+      :body => body
+    }, :api_key => @key
+  end
+  
+end
+
+def store_asset(asset_name)
+  AWS::S3::Base.establish_connection!(:access_key_id => ENV['AMAZON_ACCESS_KEY_ID'], :secret_access_key => ENV['AMAZON_SECRET_ACCESS_KEY'])
+  AWS::S3::Bucket.create(@bucket)
+  AWS::S3::S3Object.store(asset_name, open(asset_name), @bucket, :access => :public_read )
+  puts "Successfully uploaded #{asset_name}"
+end
+
