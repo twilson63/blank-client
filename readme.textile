@@ -22,11 +22,9 @@ h2. Getting Started
 
 Then add your blank server url, api key and bucket (S3) settings:
 
-@
-  url: [Your Url]
-  api_key: [Api Key you set for your blank server ]
-  bucket: [S3 bucket you will be storing your assets]
-@
+@url: [Your Url]@
+@api_key: [Api Key you set for your blank server ]@
+@bucket: [S3 bucket you will be storing your assets]@
  
 Start creating your pages, the default page called index, this is the page that will load when you call [Your Url Root] e.g. http://localhost:3000
 
@@ -44,6 +42,34 @@ Using haml you can use what is called partials or includes.  This allows you to 
 
 You can see in the layout.haml how I include the partial files:
 
-@
-  = haml Page.get_page('shared/_menu'), :layout => false
-@
+@= haml Page.get_page('shared/_menu'), :layout => false@
+
+h3. Using rake to deploy your content
+
+When you are ready to deploy your content you simply just execute a rake task.
+
+* Deploy Pages
+
+@rake deploy:pages@
+
+* Deploy Images
+  Need Amazon S3 setup(http://amazon.rubyforge.org/), see for more details, also on how you setup your environment varibles for seamless deployment.
+  
+@rake deploy:images@
+
+* Deploy Javascripts
+
+@rake deploy:javascripts@
+
+* Deploy Stylesheets
+
+@rake deploy:stylesheets@
+
+h3. Layout is always called layout.
+
+The blank project for simplicity only allows one layout per site, this may change in the future, but for right now, it keeps things simple.
+
+h3. Any questions or problems post an issue.
+
+http://github.com/twilson63/blank-client/issues
+
