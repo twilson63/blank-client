@@ -12,6 +12,7 @@ task :environment do
   @client = RestClient::Resource.new @url
 
   @files = Dir.glob('**/*.haml') + Dir.glob('**/*.markdown') 
+  @images = Dir.glob('images/**/*.jpeg') + Dir.glob('images/**/*.png') + Dir.glob('images/**/*.gif') + Dir.glob('images/**/*.jpg')   
   @stylesheets = Dir.glob('stylesheets/*.css')
   @javascripts = Dir.glob('javascripts/*.js')
 
