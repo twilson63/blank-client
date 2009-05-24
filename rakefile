@@ -1,4 +1,4 @@
-require 'rubygems'
+equire 'rubygems'
 require 'rest_client'
 require 'crack/json'
 require 'aws/s3'
@@ -13,17 +13,19 @@ task :environment do
 
   @files = Dir.glob('**/*.haml') + Dir.glob('**/*.markdown') 
   @images = Dir.glob('images/**/*.jpeg') + Dir.glob('images/**/*.png') + Dir.glob('images/**/*.gif') + Dir.glob('images/**/*.jpg')   
-  @stylesheets = Dir.glob('stylesheets/*.css')
-  @javascripts = Dir.glob('javascripts/*.js')
+  @stylesheets = Dir.glob('stylesheets/**/*.css')
+  @javascripts = Dir.glob('javascripts/**/*.js')
+  @swfs = Dir.glob('swfs/**/*.swf')
 
 end
 
 namespace :deploy do
 
   task(:pages => :environment) do
+    puts "Updateing #{@url}"
     @files.each do |f|
-      deploy_file(f.split('.')[0], f.split('.')[1], open(f).read)
-      puts "Successfully updated #{f} on #{@url}"
+      page_file = open(f)
+      deploy_file(f.split('.')[0], f.split('.')[1], page_file.read, page_file.mtime)
     end    
   end
   
@@ -46,23 +48,20 @@ namespace :deploy do
       store_asset js
     end  
   end
-  
-  
-  
-  
+
+  task(:swfs => :environment) do
+    # upload javascripts s3
+    @swfs.each do |swf|
+      store_asset swf
+    end  
+  end
+    
 end
 
-def deploy_file(name, type, body)
+def deploy_file(name, type, body, date_changed)
   # Find Page?
   page = Crack::JSON.parse(@client["/pages/#{name}?api_key=#{@key}"].get)
-  if page
-    ## Update
-    page = @client["/pages/#{page["id"]}"].put :page => {
-      :page_type => type,
-      :name => name,
-      :body => body
-    }, :api_key => @key
-  else
+  if page.nil?
     puts "Posting #{name}.#{type}"
     ## Create
     page = @client['/pages'].post :page => {
@@ -70,6 +69,17 @@ def deploy_file(name, type, body)
       :name => name,
       :body => body
     }, :api_key => @key
+    puts "Successfully created #{name}"    
+  elsif page and Time.parse(page["updated_at"]) < date_changed
+    ## Update
+    page = @client["/pages/#{page["id"]}"].put :page => {
+      :page_type => type,
+      :name => name,
+      :body => body
+    }, :api_key => @key
+    puts "Successfully updated #{name}"
+  else
+    puts "NoChange #{name}"
   end
   
 end
@@ -77,7 +87,12 @@ end
 def store_asset(asset_name)
   AWS::S3::Base.establish_connection!(:access_key_id => ENV['AMAZON_ACCESS_KEY_ID'], :secret_access_key => ENV['AMAZON_SECRET_ACCESS_KEY'])
   AWS::S3::Bucket.create(@bucket)
-  AWS::S3::S3Object.store(asset_name, open(asset_name), @bucket, :access => :public_read )
-  puts "Successfully uploaded #{asset_name}"
+  asset_file = open(asset_name)
+  s3object = AWS::S3::S3Object.find(asset_name, @bucket)
+  if s3object and asset_file.mtime > Time.parse(s3object.about[:last_modified])
+    AWS::S3::S3Object.store(asset_name, asset_file, @bucket, :access => :public_read )
+    puts "Successfully uploaded #{asset_name}"
+  else
+    puts "No Changes for #{asset_name}"    
+  end
 end
-
