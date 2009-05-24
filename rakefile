@@ -1,4 +1,4 @@
-equire 'rubygems'
+require 'rubygems'
 require 'rest_client'
 require 'crack/json'
 require 'aws/s3'
@@ -16,6 +16,7 @@ task :environment do
   @stylesheets = Dir.glob('stylesheets/**/*.css')
   @javascripts = Dir.glob('javascripts/**/*.js')
   @swfs = Dir.glob('swfs/**/*.swf')
+  @pdfs = Dir.glob('pdfs/**/*.pdf')
 
 end
 
@@ -50,9 +51,16 @@ namespace :deploy do
   end
 
   task(:swfs => :environment) do
-    # upload javascripts s3
+    # upload flash to s3
     @swfs.each do |swf|
       store_asset swf
+    end  
+  end
+
+  task(:pdfs => :environment) do
+    # upload pdfs to s3
+    @pdfs.each do |pdf|
+      store_asset pdf
     end  
   end
     
@@ -88,11 +96,19 @@ def store_asset(asset_name)
   AWS::S3::Base.establish_connection!(:access_key_id => ENV['AMAZON_ACCESS_KEY_ID'], :secret_access_key => ENV['AMAZON_SECRET_ACCESS_KEY'])
   AWS::S3::Bucket.create(@bucket)
   asset_file = open(asset_name)
-  s3object = AWS::S3::S3Object.find(asset_name, @bucket)
-  if s3object and asset_file.mtime > Time.parse(s3object.about[:last_modified])
+  begin
+    s3object = AWS::S3::S3Object.find(asset_name, @bucket)
+    if s3object and asset_file.mtime > Time.parse(s3object.about[:last_modified])
+      AWS::S3::S3Object.store(asset_name, asset_file, @bucket, :access => :public_read )
+      puts "Successfully uploaded #{asset_name}"
+    else
+      puts "No Changes for #{asset_name}"    
+    end
+  rescue
     AWS::S3::S3Object.store(asset_name, asset_file, @bucket, :access => :public_read )
-    puts "Successfully uploaded #{asset_name}"
-  else
-    puts "No Changes for #{asset_name}"    
+    puts "Successfully added #{asset_name}"
+    
   end
+  
 end
+
