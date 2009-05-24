@@ -17,6 +17,7 @@ task :environment do
   @javascripts = Dir.glob('javascripts/**/*.js')
   @swfs = Dir.glob('swfs/**/*.swf')
   @pdfs = Dir.glob('pdfs/**/*.pdf')
+  @flvs = Dir.glob('flvs/**/*.flv')
 
 end
 
@@ -63,6 +64,14 @@ namespace :deploy do
       store_asset pdf
     end  
   end
+  
+  task(:flvs => :environment) do
+    # upload pdfs to s3
+    @flvs.each do |flv|
+      store_asset flv
+    end  
+  end
+  
     
 end
 
